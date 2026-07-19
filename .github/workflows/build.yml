@@ -35,10 +35,9 @@ jobs:
           git fetch pipa $DEFAULT_BRANCH
           git reset --hard pipa/$DEFAULT_BRANCH
 
-      - name: Build required packages
+      - name: Build required packages with lax mode
         run: |
           pmbootstrap build --lax abuild
-          pmbootstrap build --lax postmarketos-base
 
       - name: Install xiaomi-pipa image
         run: |
