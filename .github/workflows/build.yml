@@ -23,26 +23,13 @@ jobs:
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
           pmbootstrap --version
 
-      - name: Copy config and set up pmaports
+      - name: Init pmbootstrap and build
         run: |
           mkdir -p ~/.config
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-          echo -e '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' | pmbootstrap init || true
+          echo -e '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' | pmbootstrap init
           pmbootstrap config build_pkgs_on_install false
-          cd ~/.local/var/pmbootstrap/cache_git/pmaports
-          git remote add pipa https://github.com/pipa-project/pmaports-pipa.git || true
-          DEFAULT_BRANCH=$(git remote show pipa | awk '/HEAD branch/ {print $NF}')
-          git fetch pipa $DEFAULT_BRANCH
-          git reset --hard pipa/$DEFAULT_BRANCH
-
-      - name: Build required packages with lax mode
-        run: |
           pmbootstrap build --lax abuild
-
-      - name: Install xiaomi-pipa image
-        run: |
-          cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-          pmbootstrap config build_pkgs_on_install false
           pmbootstrap install --password 147147
           pmbootstrap export
           cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
