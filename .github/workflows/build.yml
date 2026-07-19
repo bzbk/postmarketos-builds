@@ -13,28 +13,23 @@ jobs:
       - name: Create artifact directory
         run: mkdir out
 
-      - name: Substitute placeholders in configs
-        run: find . -type f -name "*.cfg" -exec sed -i "s|HOME|$(echo $HOME)|;s|NPROC|$(nproc)|" {} +
-
       - name: Install pmbootstrap from git
         run: |
           git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
           mkdir -p ~/.local/bin
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
+          # Patch strict mode off
+          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
+          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
           pmbootstrap --version
 
-      - name: Copy config
+      - name: Copy config and init
         run: |
           mkdir -p ~/.config
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
+          yes "" | pmbootstrap init
 
-      - name: Run pmbootstrap init
-        run: yes "" | pmbootstrap init
-
-      - name: Build abuild first
-        run: pmbootstrap build abuild
-
-      - name: Install and export
+      - name: Build and install
         run: |
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
           pmbootstrap install --password 147147
