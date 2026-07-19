@@ -16,30 +16,38 @@ jobs:
       - name: Substitute placeholders in configs
         run: find . -type f -name "*.cfg" -exec sed -i "s|HOME|$(echo $HOME)|;s|NPROC|$(nproc)|" {} +
 
-      - name: Install pmbootstrap and setup manually
+      - name: Install pmbootstrap from git
         run: |
           git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
           mkdir -p ~/.local/bin
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
-          # Patch strict mode
+          # Patch strict mode off
           sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
           sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
-          # Setup directories
+          pmbootstrap --version
+
+      - name: Copy config
+        run: |
           mkdir -p ~/.config
-          mkdir -p ~/.local/var/pmbootstrap/cache_git
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-          # Clone pmaports manually
-          git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git ~/.local/var/pmbootstrap/cache_git/pmaports
+
+      - name: Run pmbootstrap init
+        run: |
+          yes "" | pmbootstrap init
+
+      - name: Switch to pipa pmaports
+        run: |
           cd ~/.local/var/pmbootstrap/cache_git/pmaports
           git remote add pipa https://github.com/pipa-project/pmaports-pipa.git || true
           DEFAULT_BRANCH=$(git remote show pipa | awk '/HEAD branch/ {print $NF}')
           git fetch pipa $DEFAULT_BRANCH
           git reset --hard pipa/$DEFAULT_BRANCH
 
-      - name: Build and install
+      - name: Build image
         run: |
-          pmbootstrap --as-root install --password 147147
-          pmbootstrap --as-root export
+          cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
+          pmbootstrap install --password 147147
+          pmbootstrap export
           cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
           cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
 
