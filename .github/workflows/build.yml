@@ -37,8 +37,7 @@ jobs:
       - name: Build the xiaomi-pipa console image
         run: |
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-          pmbootstrap build abuild
-          pmbootstrap install --password 147147
+          pmbootstrap install --password 147147 --lax
           pmbootstrap export
           cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
           cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
