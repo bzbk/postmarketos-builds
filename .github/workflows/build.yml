@@ -18,7 +18,6 @@ jobs:
           git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
           mkdir -p ~/.local/bin
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
-          # Patch strict mode off
           sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
           sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
           pmbootstrap --version
@@ -34,12 +33,12 @@ jobs:
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
           pmbootstrap install --password 147147
           pmbootstrap export
-          cp /tmp/postmarketOS-export/xiaomi-pipa-boot.img out/boot-xiaomi-pipa.img
-          cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
+          ls -la /tmp/postmarketOS-export/
+          cp -r /tmp/postmarketOS-export/* out/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xiaomi-pipa-console
-          path: out/*.img*
+          path: out/
           retention-days: 7
