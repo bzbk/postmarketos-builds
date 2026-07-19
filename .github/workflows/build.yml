@@ -23,6 +23,11 @@ jobs:
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
           pmbootstrap --version
 
+      - name: Patch pmbootstrap
+        run: |
+          sed -i 's/strict: bool = True/strict: bool = False/' pmbootstrap/pmb/build/_package.py
+          sed -i 's/strict: bool = True/strict: bool = False/' pmbootstrap/pmb/build/backend.py
+
       - name: Set up pmaports
         run: |
           yes "" | pmbootstrap init
