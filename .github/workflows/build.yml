@@ -5,22 +5,16 @@ on:
 
 jobs:
   build-image:
-    strategy:
-      matrix:
-        version: ["default"]
-
     runs-on: ubuntu-latest
     steps:
       - name: Check out build configurations
         uses: actions/checkout@v4
 
       - name: Create artifact directory
-        run: |
-            mkdir out
+        run: mkdir out
 
       - name: Substitute placeholders in configs
-        run: |
-           find . -type f -name "*.cfg" -exec sed -i "s|HOME|$(echo $HOME)|;s|NPROC|$(nproc)|" {} +
+        run: find . -type f -name "*.cfg" -exec sed -i "s|HOME|$(echo $HOME)|;s|NPROC|$(nproc)|" {} +
 
       - name: Install pmbootstrap from git
         run: |
@@ -29,27 +23,28 @@ jobs:
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
           pmbootstrap --version
 
-      - name: Set up pmaports
+      - name: Copy config and set up pmaports
         run: |
-          echo -e '\n\n' | pmbootstrap init || true
+          mkdir -p ~/.config
+          cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
+          echo -e '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' | pmbootstrap init || true
           cd ~/.local/var/pmbootstrap/cache_git/pmaports
-          git remote
-          git remote add pipa https://github.com/pipa-project/pmaports-pipa.git
+          git remote add pipa https://github.com/pipa-project/pmaports-pipa.git || true
           DEFAULT_BRANCH=$(git remote show pipa | awk '/HEAD branch/ {print $NF}')
           git fetch pipa $DEFAULT_BRANCH
           git reset --hard pipa/$DEFAULT_BRANCH
 
       - name: Build the xiaomi-pipa console image
         run: |
-           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-           pmbootstrap install --password 147147
-           pmbootstrap export
-           cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
-           cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
+          cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
+          pmbootstrap install --password 147147
+          pmbootstrap export
+          cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
+          cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-           name: xiaomi-pipa-console
-           path: out/*.img*
-           retention-days: 7
+          name: xiaomi-pipa-console
+          path: out/*.img*
+          retention-days: 7
