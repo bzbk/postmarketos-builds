@@ -32,10 +32,6 @@ jobs:
           git fetch pipa $DEFAULT_BRANCH
           git reset --hard pipa/$DEFAULT_BRANCH
 
-      - name: Patch pmbootstrap for non-strict
-        run: |
-          sed -i 's/strict: bool = True/strict: bool = False/' pmbootstrap/pmb/build/_package.py pmbootstrap/pmb/build/backend.py
-
       - name: Build xiaomi-pipa image
         run: |
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
