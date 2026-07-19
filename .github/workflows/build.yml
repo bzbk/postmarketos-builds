@@ -34,7 +34,7 @@ jobs:
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
           pmbootstrap install --password 147147
           pmbootstrap export
-          cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
+          cp /tmp/postmarketOS-export/xiaomi-pipa-boot.img out/boot-xiaomi-pipa.img
           cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
 
       - name: Upload artifacts
