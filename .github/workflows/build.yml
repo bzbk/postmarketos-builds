@@ -23,13 +23,16 @@ jobs:
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
           pmbootstrap --version
 
-      - name: Init pmbootstrap and build
+      - name: Patch pmbootstrap to disable strict mode
+        run: |
+          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
+          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
+
+      - name: Init and build
         run: |
           mkdir -p ~/.config
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
           echo -e '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' | pmbootstrap init
-          pmbootstrap config build_pkgs_on_install false
-          pmbootstrap build --lax abuild
           pmbootstrap install --password 147147
           pmbootstrap export
           cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
