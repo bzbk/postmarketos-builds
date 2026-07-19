@@ -13,54 +13,40 @@ jobs:
       - name: Create artifact directory
         run: mkdir out
 
+      - name: Substitute placeholders in configs
+        run: find . -type f -name '*.cfg' -exec sed -i "s|HOME|$HOME|;s|NPROC|$(nproc)|" {} +
+
       - name: Install pmbootstrap from git
         run: |
           git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
           mkdir -p ~/.local/bin
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
-          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
-          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
           pmbootstrap --version
 
-      - name: Copy config and init
+      - name: Set up pmaports
         run: |
-          mkdir -p ~/.config
-          cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
           yes "" | pmbootstrap init
+          cd ~/.local/var/pmbootstrap/cache_git/pmaports
+          git remote add pipa https://github.com/pipa-project/pmaports-pipa.git
+          DEFAULT_BRANCH=$(git remote show pipa | awk '/HEAD branch/ {print $NF}')
+          git fetch pipa $DEFAULT_BRANCH
+          git reset --hard pipa/$DEFAULT_BRANCH
 
-      - name: Build and install
+      - name: Patch pmbootstrap for non-strict
+        run: |
+          sed -i 's/strict: bool = True/strict: bool = False/' pmbootstrap/pmb/build/_package.py pmbootstrap/pmb/build/backend.py
+
+      - name: Build xiaomi-pipa image
         run: |
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-          pmbootstrap install --password 147147
+          yes | pmbootstrap install --password 147147
           pmbootstrap export
-          ls -la /tmp/postmarketOS-export/
-          cp -r /tmp/postmarketOS-export/* out/
+          cp /tmp/postmarketOS-export/*.img out/ 2>/dev/null || cp /tmp/postmarketOS-export/xiaomi-pipa* out/ 2>/dev/null || ls /tmp/postmarketOS-export/
+          ls -lh out/
 
-
-      - name: Configure WiFi auto-connect
-        run: |
-          mkdir -p /tmp/pmroot
-          # Mount the rootfs from export
-          sudo mount /tmp/postmarketOS-export/xiaomi-pipa.img /tmp/pmroot 2>/dev/null || true
-          # Create wpa_supplicant config
-          sudo mkdir -p /tmp/pmroot/etc/wpa_supplicant
-          echo 'network={
-          ssid="GoForNetwork-bzbk007"
-          psk="aA114514@"
-          key_mgmt=WPA-PSK
-          }' | sudo tee /tmp/pmroot/etc/wpa_supplicant/wpa_supplicant.conf
-          # Create auto-connect script
-          echo '#!/bin/sh
-          ip link set wlan0 up
-          wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
-          sleep 3
-          udhcpc -i wlan0
-          ' | sudo tee /tmp/pmroot/etc/local.d/wifi-autoconnect.start
-          sudo chmod +x /tmp/pmroot/etc/local.d/wifi-autoconnect.start
-          sudo umount /tmp/pmroot 2>/dev/null
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xiaomi-pipa-console
-          path: out/
+          path: out/*.img*
           retention-days: 7
