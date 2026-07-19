@@ -36,6 +36,28 @@ jobs:
           ls -la /tmp/postmarketOS-export/
           cp -r /tmp/postmarketOS-export/* out/
 
+
+      - name: Configure WiFi auto-connect
+        run: |
+          mkdir -p /tmp/pmroot
+          # Mount the rootfs from export
+          sudo mount /tmp/postmarketOS-export/xiaomi-pipa.img /tmp/pmroot 2>/dev/null || true
+          # Create wpa_supplicant config
+          sudo mkdir -p /tmp/pmroot/etc/wpa_supplicant
+          echo 'network={
+          ssid="GoForNetwork-bzbk007"
+          psk="aA114514@"
+          key_mgmt=WPA-PSK
+          }' | sudo tee /tmp/pmroot/etc/wpa_supplicant/wpa_supplicant.conf
+          # Create auto-connect script
+          echo '#!/bin/sh
+          ip link set wlan0 up
+          wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+          sleep 3
+          udhcpc -i wlan0
+          ' | sudo tee /tmp/pmroot/etc/local.d/wifi-autoconnect.start
+          sudo chmod +x /tmp/pmroot/etc/local.d/wifi-autoconnect.start
+          sudo umount /tmp/pmroot 2>/dev/null
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
