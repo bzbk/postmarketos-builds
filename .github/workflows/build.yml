@@ -21,9 +21,6 @@ jobs:
           git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
           mkdir -p ~/.local/bin
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
-          # Patch strict mode off
-          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
-          sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
           pmbootstrap --version
 
       - name: Copy config
@@ -32,18 +29,12 @@ jobs:
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
 
       - name: Run pmbootstrap init
-        run: |
-          yes "" | pmbootstrap init
+        run: yes "" | pmbootstrap init
 
-      - name: Switch to pipa pmaports
-        run: |
-          cd ~/.local/var/pmbootstrap/cache_git/pmaports
-          git remote add pipa https://github.com/pipa-project/pmaports-pipa.git || true
-          DEFAULT_BRANCH=$(git remote show pipa | awk '/HEAD branch/ {print $NF}')
-          git fetch pipa $DEFAULT_BRANCH
-          git reset --hard pipa/$DEFAULT_BRANCH
+      - name: Build abuild first
+        run: pmbootstrap build abuild
 
-      - name: Build image
+      - name: Install and export
         run: |
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
           pmbootstrap install --password 147147
