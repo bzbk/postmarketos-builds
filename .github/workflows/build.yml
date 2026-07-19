@@ -16,25 +16,30 @@ jobs:
       - name: Substitute placeholders in configs
         run: find . -type f -name "*.cfg" -exec sed -i "s|HOME|$(echo $HOME)|;s|NPROC|$(nproc)|" {} +
 
-      - name: Install pmbootstrap from git
+      - name: Install pmbootstrap and setup manually
         run: |
           git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
           mkdir -p ~/.local/bin
           ln -s "$PWD/pmbootstrap/pmbootstrap.py" ~/.local/bin/pmbootstrap
-          pmbootstrap --version
-
-      - name: Patch pmbootstrap to disable strict mode
-        run: |
+          # Patch strict mode
           sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/_package.py
           sed -i 's/strict: bool = True/strict: bool = False/g' pmbootstrap/pmb/build/backend.py
-
-      - name: Init and build
-        run: |
+          # Setup directories
           mkdir -p ~/.config
+          mkdir -p ~/.local/var/pmbootstrap/cache_git
           cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-          yes "" | pmbootstrap init
-          pmbootstrap install --password 147147
-          pmbootstrap export
+          # Clone pmaports manually
+          git clone --depth=1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git ~/.local/var/pmbootstrap/cache_git/pmaports
+          cd ~/.local/var/pmbootstrap/cache_git/pmaports
+          git remote add pipa https://github.com/pipa-project/pmaports-pipa.git || true
+          DEFAULT_BRANCH=$(git remote show pipa | awk '/HEAD branch/ {print $NF}')
+          git fetch pipa $DEFAULT_BRANCH
+          git reset --hard pipa/$DEFAULT_BRANCH
+
+      - name: Build and install
+        run: |
+          pmbootstrap --as-root install --password 147147
+          pmbootstrap --as-root export
           cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
           cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa.img
 
